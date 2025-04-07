@@ -1,12 +1,8 @@
 // threads3.rs
 //
-// Execute `rustlings hint threads3` or use the `hint` watch subcommand for a
-// hint.
-
-// I AM NOT DONE
-
-use std::sync::mpsc;
-use std::sync::Arc;
+// Execute `rustlings hint threads3` or use the `hint` watch subcommand
+// for a hint
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
@@ -27,22 +23,30 @@ impl Queue {
 }
 
 fn send_tx(q: Queue, tx: mpsc::Sender<u32>) -> () {
-    let qc = Arc::new(q);
-    let qc1 = Arc::clone(&qc);
-    let qc2 = Arc::clone(&qc);
+    let first_half = q.first_half.clone();
+    let second_half = q.second_half.clone();
 
+    // 将 tx 包裹在 Arc<Mutex<_>> 中
+    let tx = Arc::new(Mutex::new(tx));
+
+    // 第一个线程
+    let tx1 = Arc::clone(&tx);
     thread::spawn(move || {
-        for val in &qc1.first_half {
+        for val in first_half {
             println!("sending {:?}", val);
-            tx.send(*val).unwrap();
+            let tx = tx1.lock().unwrap(); // 获取锁
+            tx.send(val).unwrap();
             thread::sleep(Duration::from_secs(1));
         }
     });
 
+    // 第二个线程
+    let tx2 = Arc::clone(&tx);
     thread::spawn(move || {
-        for val in &qc2.second_half {
+        for val in second_half {
             println!("sending {:?}", val);
-            tx.send(*val).unwrap();
+            let tx = tx2.lock().unwrap(); // 获取锁
+            tx.send(val).unwrap();
             thread::sleep(Duration::from_secs(1));
         }
     });
@@ -62,5 +66,5 @@ fn main() {
     }
 
     println!("total numbers received: {}", total_received);
-    assert_eq!(total_received, queue_length)
+    assert_eq!(total_received, queue_length);
 }
