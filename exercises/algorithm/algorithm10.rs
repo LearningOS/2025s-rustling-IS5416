@@ -60,8 +60,8 @@ pub trait Graph {
     }
     fn edges(&self) -> Vec<(&String, &String, i32)> {
         let mut edges = Vec::new();
-        for (from_node, from_node_neighbours) in self.adjacency_table() {
-            for (to_node, weight) in from_node_neighbours {
+        for (from_node, from_node_neighbors) in self.adjacency_table() {
+            for (to_node, weight) in from_node_neighbors {
                 edges.push((from_node, to_node, *weight));
             }
         }
